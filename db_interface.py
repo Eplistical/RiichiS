@@ -1,21 +1,28 @@
 import os
 import sqlite3
+from typing import Optional
 from game_stats import GameStats
 from game_stats import PlayerStats
-from game_stats import AggregatedPlayerStats
 
-DB_NAME = f"{os.path.dirname(os.path.realpath(__file__))}/riichi-stats.db"
+DB_NAME: str = f"{os.path.dirname(os.path.realpath(__file__))}/riichi-stats.db"
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
 class DbInterface(object):
   """database interface class"""
 
   def __init__(self):
     self.conn = sqlite3.connect(DB_NAME)
+    self.conn.row_factory = dict_factory
 
   def __del__(self):
     self.conn.close()
 
-  def init_db(self):
+  def init_db(self) -> None:
     """init tables in db, this should be called for a brand new db only"""
     cur = self.conn.cursor()
     cur.execute(f"""
@@ -31,32 +38,32 @@ class DbInterface(object):
 
         east_player_name TEXT NOT NULL, 
         east_player_points INTEGER NOT NULL,  
-        east_player_riichi INTEGER NOT NULL,
-        east_player_agari INTEGER NOT NULL,
-        east_player_deal_in INTEGER NOT NULL,
+        east_player_riichi INTEGER,
+        east_player_agari INTEGER,
+        east_player_deal_in INTEGER,
 
         south_player_name TEXT NOT NULL, 
         south_player_points INTEGER NOT NULL,  
-        south_player_riichi INTEGER NOT NULL,
-        south_player_agari INTEGER NOT NULL,
-        south_player_deal_in INTEGER NOT NULL,
+        south_player_riichi INTEGER,
+        south_player_agari INTEGER,
+        south_player_deal_in INTEGER,
 
         west_player_name TEXT NOT NULL, 
         west_player_points INTEGER NOT NULL,  
-        west_player_riichi INTEGER NOT NULL,
-        west_player_agari INTEGER NOT NULL,
-        west_player_deal_in INTEGER NOT NULL,
+        west_player_riichi INTEGER,
+        west_player_agari INTEGER,
+        west_player_deal_in INTEGER,
 
         north_player_name TEXT NOT NULL, 
         north_player_points INTEGER NOT NULL,  
-        north_player_riichi INTEGER NOT NULL,
-        north_player_agari INTEGER NOT NULL,
-        north_player_deal_in INTEGER NOT NULL
+        north_player_riichi INTEGER,
+        north_player_agari INTEGER,
+        north_player_deal_in INTEGER
       )
     """)
     self.conn.commit()
 
-  def add_player(self, player_name):
+  def add_player(self, player_name: str) -> None:
     """add a new player"""
     if self.player_exists(player_name):
       return
@@ -66,7 +73,7 @@ class DbInterface(object):
     """)
     self.conn.commit()
 
-  def player_exists(self, player_name):
+  def player_exists(self, player_name: str) -> None:
     """weather a player exists in the db"""
     cur = self.conn.cursor()
     rst = cur.execute(f"""
@@ -74,7 +81,7 @@ class DbInterface(object):
     """)
     return rst.fetchone() != None
 
-  def list_players(self):
+  def list_players(self) -> list[str]:
     """list all players"""
     cur = self.conn.cursor()
     rst = cur.execute(f"""
@@ -82,7 +89,7 @@ class DbInterface(object):
     """)
     return rst.fetchall()
 
-  def record_game(self, game_stats):
+  def record_game(self, game_stats: GameStats) -> None:
     """record a game stats"""
     cur = self.conn.cursor()
     cur.execute(f"""
@@ -142,7 +149,7 @@ class DbInterface(object):
     """)
     self.conn.commit()
 
-  def list_games(self, start_date, end_date, player_name=None):
+  def list_games(self, start_date: int, end_date: int, player_name: Optional[str]=None) -> list[GameStats]:
     """list all games between given dates, and potentially for a given player"""
     cur = self.conn.cursor()
     player_filter = ""
@@ -161,55 +168,43 @@ class DbInterface(object):
       WHERE 
         {player_filter}
         date BETWEEN {start_date} AND {end_date}
+      ORDER BY
+        game_id ASC
     """)
-    return rst.fetchall()
+    games = []
+    for data in rst.fetchall():
+      game = GameStats(
+        game_id=data['game_id'],
+        date=data['date'],
+        east_player_stats=PlayerStats(
+          player_name=data['east_player_name'],
+          points=data['east_player_points'],
+          riichi=data['east_player_riichi'],
+          agari=data['east_player_agari'],
+          deal_in=data['east_player_deal_in'],
+        ),
+        south_player_stats=PlayerStats(
+          player_name=data['south_player_name'],
+          points=data['south_player_points'],
+          riichi=data['south_player_riichi'],
+          agari=data['south_player_agari'],
+          deal_in=data['south_player_deal_in'],
+        ),
+        west_player_stats=PlayerStats(
+          player_name=data['west_player_name'],
+          points=data['west_player_points'],
+          riichi=data['west_player_riichi'],
+          agari=data['west_player_agari'],
+          deal_in=data['west_player_deal_in'],
+        ),
+        north_player_stats=PlayerStats(
+          player_name=data['north_player_name'],
+          points=data['north_player_points'],
+          riichi=data['north_player_riichi'],
+          agari=data['north_player_agari'],
+          deal_in=data['north_player_deal_in'],
+        )
+      )
+      games.append(game)
+    return games
 
-  def get_aggregated_stats(self, start_date, end_date, player_name=None):
-    """get aggregated stats for all games between two given dates, and potenially for a given player"""
-
-
-db = DbInterface()
-db.init_db()
-
-db.add_player("Ep")
-db.add_player("Rodrick")
-db.add_player("lailai")
-db.add_player("Junhan")
-players = db.list_players()
-print(players)
-
-game1 = GameStats(game_id=1,
-                  date=20240517, 
-                  east_player_stats=PlayerStats(
-                      player_name='Ep',
-                      points = 30000,
-                      riichi = 3,
-                      agari = 2,
-                      deal_in = 1,
-                    ),
-                  south_player_stats=PlayerStats(
-                      player_name='Junhan',
-                      points = 23000,
-                      riichi = 1,
-                      agari = 3,
-                      deal_in = 5,
-                    ),
-                  west_player_stats=PlayerStats(
-                      player_name='lailai',
-                      points = 47000,
-                      riichi = 4,
-                      agari = 2,
-                      deal_in = 0,
-                    ),
-                  north_player_stats=PlayerStats(
-                      player_name='Rodrick',
-                      points = 10000,
-                      riichi = 1,
-                      agari = 0,
-                      deal_in = 4,
-                    ),
-                  )
-
-db.record_game(game1)
-games = db.list_games(20240501, 20240601)
-print(games)
