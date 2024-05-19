@@ -5,7 +5,8 @@ from game_stats import GameStats
 from game_stats import PlayerStats
 from stats import get_aggregated_player_stats
 from stats import generate_leader_board_excel
-from pprint import pprint
+from util import resolve_ranks
+from util import RANK_TEXT_MAP
 
 
 def parse_player_stats(arg):
@@ -39,11 +40,18 @@ def parse_args():
   return parser.parse_args()
 
 def print_game(game: GameStats):
+  pts = [
+    game.east_player_stats.points,
+    game.south_player_stats.points,
+    game.west_player_stats.points,
+    game.north_player_stats.points,
+  ]
+  rank_texts = [RANK_TEXT_MAP[r] for r in resolve_ranks(pts)]
   print(f'game_id = {game.game_id}, date = {game.date}')
-  print(f'[東]{game.east_player_stats.player_name:>10}{game.east_player_stats.points:>7} 立{game.east_player_stats.riichi:<2}和{game.east_player_stats.agari:<2}铳{game.east_player_stats.deal_in:<2}')
-  print(f'[南]{game.south_player_stats.player_name:>10}{game.south_player_stats.points:>7} 立{game.south_player_stats.riichi:<2}和{game.south_player_stats.agari:<2}铳{game.south_player_stats.deal_in:<2}')
-  print(f'[西]{game.west_player_stats.player_name:>10}{game.west_player_stats.points:>7} 立{game.west_player_stats.riichi:<2}和{game.west_player_stats.agari:<2}铳{game.west_player_stats.deal_in:<2}')
-  print(f'[北]{game.north_player_stats.player_name:>10}{game.north_player_stats.points:>7} 立{game.north_player_stats.riichi:<2}和{game.north_player_stats.agari:<2}铳{game.north_player_stats.deal_in:<2}')
+  print(f'[東]{game.east_player_stats.player_name:>8}[{rank_texts[0]}位]{game.east_player_stats.points:>6} 立{game.east_player_stats.riichi:<2}和{game.east_player_stats.agari:<2}铳{game.east_player_stats.deal_in:<2}')
+  print(f'[南]{game.south_player_stats.player_name:>8}[{rank_texts[1]}位]{game.south_player_stats.points:>6} 立{game.south_player_stats.riichi:<2}和{game.south_player_stats.agari:<2}铳{game.south_player_stats.deal_in:<2}')
+  print(f'[西]{game.west_player_stats.player_name:>8}[{rank_texts[2]}位]{game.west_player_stats.points:>6} 立{game.west_player_stats.riichi:<2}和{game.west_player_stats.agari:<2}铳{game.west_player_stats.deal_in:<2}')
+  print(f'[北]{game.north_player_stats.player_name:>8}[{rank_texts[3]}位]{game.north_player_stats.points:>6} 立{game.north_player_stats.riichi:<2}和{game.north_player_stats.agari:<2}铳{game.north_player_stats.deal_in:<2}')
 
 def run_add_player(args):
   if not args.player:
