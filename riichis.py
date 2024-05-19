@@ -138,6 +138,5 @@ if __name__ == '__main__':
   try:
     args = parse_args()
     run(args)
-    print(args)
   except Exception as e:
     print(f"error occurred: {e}")
