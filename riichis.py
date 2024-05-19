@@ -35,6 +35,7 @@ def parse_args():
   parser.add_argument('--south', type=parse_player_stats)
   parser.add_argument('--west', type=parse_player_stats)
   parser.add_argument('--north', type=parse_player_stats)
+  parser.add_argument('--uma', type=int, nargs=4, default=[45,5,-15,-35])
   return parser.parse_args()
 
 def print_game(game: GameStats):
@@ -106,9 +107,9 @@ def run_list_games(args):
     print('-' * 32)
 
 def run_get_stats(args):
-  print(f"Generate stats between {args.start_date} and {args.end_date}")
+  print(f"Generate stats between {args.start_date} and {args.end_date}, uma={args.uma}")
   db = DbInterface()
-  aggregated_stats = get_aggregated_player_stats(db, args.start_date, args.end_date)
+  aggregated_stats = get_aggregated_player_stats(db, args.start_date, args.end_date, uma=args.uma)
   excel_file="leaderboard.xlsx"
   generate_leader_board_excel(aggregated_stats, outfile_name=excel_file)
   print(f"Exported to excel {excel_file}")
@@ -137,5 +138,6 @@ if __name__ == '__main__':
   try:
     args = parse_args()
     run(args)
+    print(args)
   except Exception as e:
     print(f"error occurred: {e}")
