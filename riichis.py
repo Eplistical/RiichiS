@@ -69,7 +69,7 @@ def run_list_players(args):
   players = db.list_players()
   print(f"Players count: {len(players)}")
   for player in players:
-    print(player)
+    print(player['player_name'])
 
 def validate_player_stats(db: DbInterface, stats: PlayerStats):
   if not stats.player_name or not db.player_exists(stats.player_name):
