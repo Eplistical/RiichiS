@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import argparse 
 from db_interface import DbInterface
 from game_stats import GameStats
